@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+
+# Virtualenv
+.venv/
+venv/
+env/
+ENV/
+./backend/.venv/
+
+# Logs & cache
+*.log
+*.tmp
+.cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# SQLite
+*.sqlite
+*.sqlite3
+*.db
+compliance.db
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Frontend (آینده)
+node_modules/
+frontend/build/
