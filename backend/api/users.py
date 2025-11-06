@@ -2,22 +2,31 @@ from flask import Blueprint, request, jsonify
 from backend.db import DBManager
 from backend.models import Users
 import backend.validators as validators
-import backend.utils as utils
 
 users_bp = Blueprint("users", __name__)
+
+# expose these fields in GET responses (omit password for safety)
+_PUBLIC_FIELDS = [
+    "user_id", "username", "name", "lastname", "email", "role",
+    "mfa_enabled", "login_count", "age_days", "age", "income"
+]
+
+def _pick_public(r):
+    return {k: r.get(k) for k in _PUBLIC_FIELDS if k in r}
+
+
+def _prepare_db_obj(valid_user):
+    """Take a validated user dict and return a DB-ready dict (may hash password)."""
+    out = dict(valid_user)
+    # keep only model columns
+    return {k: v for k, v in out.items() if k in Users.db_columns and k != "user_id"}
 
 
 @users_bp.get("/users")
 def list_users():
     with DBManager() as db:
         rows = Users.all(db.conn)
-    # brief: normalized + user_id
-    out = []
-    for r in rows:
-        norm = r.get("normalized_json") or {}
-        d = dict(norm)
-        d["user_id"] = r.get("user_id")
-        out.append(d)
+    out = [_pick_public(r) for r in rows]
     return jsonify(out), 200
 
 
@@ -27,14 +36,7 @@ def get_user(user_id):
         item = Users.get(db.conn, user_id)
     if not item:
         return jsonify({"error": "not found"}), 404
-    resp = {
-        "user_id": item.get("user_id"),
-        "username": item.get("username"),
-        "raw": item.get("raw_json"),
-        "normalized": item.get("normalized_json"),
-        "created_at": item.get("created_at"),
-    }
-    return jsonify(resp), 200
+    return jsonify(_pick_public(item)), 200
 
 
 @users_bp.post("/users")
@@ -45,24 +47,19 @@ def create_users():
 
     payload = data if isinstance(data, list) else [data]
 
-    to_store = []
+    validated = []
     for u in payload:
         try:
-            validators.validate_user(u)
-            normalized = utils.normalize_user(u)
-            to_store.append((u, normalized))
+            vu = validators.validate_user(u)   # field-level validation (includes password rules)
+            validated.append(vu)
         except ValueError as e:
             return jsonify({"error": str(e), "bad_user": u}), 400
 
     created_ids = []
     with DBManager() as db:
-        for raw_u, norm_u in to_store:
-            new_id = Users.insert(
-                db.conn,
-                username=raw_u.get("username", "<unknown>"),
-                raw_json=raw_u,
-                normalized_json=norm_u,
-            )
+        for vu in validated:
+            db_obj = _prepare_db_obj(vu)
+            new_id = Users.insert(db.conn, **db_obj)
             created_ids.append(new_id)
 
     return jsonify({"created_ids": created_ids}), 201
@@ -75,25 +72,20 @@ def put_user(user_id):
         return jsonify({"error": "body must be a JSON object"}), 400
 
     try:
-        validators.validate_user(data)
-        normalized = utils.normalize_user(data)
+        vu = validators.validate_user(data)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
     with DBManager() as db:
-        # ensure exists (so 404 is meaningful)
-        if not Users.get(db.conn, user_id):
+        # ensure exists
+        current = Users.get(db.conn, user_id)
+        if not current:
             return jsonify({"error": "not found"}), 404
-        updated = Users.update(
-            db.conn,
-            user_id,
-            username=data.get("username", "<unknown>"),
-            raw_json=data,
-            normalized_json=normalized,
-        )
+
+        db_obj = _prepare_db_obj(vu)
+        updated = Users.update(db.conn, user_id, **db_obj)
 
     if updated == 0:
-        # nothing changed; still OK
         return jsonify({"updated": user_id, "note": "no changes"}), 200
     return jsonify({"updated": user_id}), 200
 
@@ -109,22 +101,17 @@ def patch_user(user_id):
         if not current:
             return jsonify({"error": "not found"}), 404
 
-        merged_raw = dict(current.get("raw_json") or {})
-        merged_raw.update(patch)
+        # base = current (strip PK) + patch → validate
+        base = {k: current.get(k) for k in Users.db_columns.keys() if k != "user_id"}
+        base.update(patch)
 
         try:
-            validators.validate_user(merged_raw)
-            merged_norm = utils.normalize_user(merged_raw)
+            vu = validators.validate_user(base)
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
 
-        updated = Users.update(
-            db.conn,
-            user_id,
-            username=merged_raw.get("username", "<unknown>"),
-            raw_json=merged_raw,
-            normalized_json=merged_norm,
-        )
+        db_obj = _prepare_db_obj(vu)
+        updated = Users.update(db.conn, user_id, **db_obj)
 
     if updated == 0:
         return jsonify({"updated": user_id, "note": "no changes"}), 200

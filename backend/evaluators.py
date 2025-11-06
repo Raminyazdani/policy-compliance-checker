@@ -1,4 +1,3 @@
-
 OPS = {
     "==": lambda a, b: a == b,
     "!=": lambda a, b: a != b,
@@ -6,8 +5,8 @@ OPS = {
     "<=": lambda a, b: a <= b,
     ">":  lambda a, b: a > b,
     "<":  lambda a, b: a < b,
-    "in": lambda a, b: a in b,
-    "includes": lambda a, b: b in a,
+    "in": lambda a, b: a in b,     # expected: list/iterable
+    "includes": lambda a, b: b in a,  # expected: substring
 }
 
 
@@ -26,10 +25,10 @@ def evaluate_user(user_obj, policies):
 
     for p in policies:
         policy_id = p["policy_id"]
-        desc = p["description"]
-        field = p["field"]
-        operator = p["operator"]
-        expected = p["value"]
+        desc      = p["description"]
+        field     = p["field"]
+        operator  = p["operator"]
+        expected  = p["value"]
 
         actual = user_obj.get(field)
         note = ""

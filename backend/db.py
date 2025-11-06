@@ -3,7 +3,7 @@ import sqlite3
 from pathlib import Path
 from backend.models import Users, Policies
 
-DB_PATH = Path(__file__).parent / "compliance.db"
+DB_PATH = Path(__file__).parent /".."/"data"/"compliance.db"
 
 
 def get_conn():

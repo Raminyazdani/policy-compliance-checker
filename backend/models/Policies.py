@@ -1,34 +1,14 @@
+import json  # kept in case policy "value" needs JSON in future
 from .abs_model import Model
 
 
 class Policies(Model):
-    table_name = "policies"
-    pk_name = "policy_id"
+    table_name = "policies"   # SQLite table name
+    pk_name = "policy_id"     # primary key column
     db_columns = {
-        "policy_id": "TEXT PRIMARY KEY",
-        "description": "TEXT",
-        "field": "TEXT",
-        "operator": "TEXT",
-        "value_json": "TEXT",
-        "created_at": "TEXT",
+        "policy_id": "TEXT PRIMARY KEY",  # stable text PK (e.g., "mfa_required")
+        "description": "TEXT",            # human-readable policy summary
+        "field": "TEXT",                  # user field to check (e.g., "email")
+        "operator": "TEXT",               # comparison op (==, !=, >=, <=, >, <, in, includes)
+        "value": "TEXT",                  # expected value (stored as TEXT; JSON string if needed)
     }
-    json_fields = {"value_json"}
-
-    @classmethod
-    def pre_save(cls, data):
-        # accept id -> policy_id, value -> value_json on writes
-        d = dict(data)
-        if "id" in d and "policy_id" not in d:
-            d["policy_id"] = d.pop("id")
-        if "value" in d and "value_json" not in d:
-            d["value_json"] = d.pop("value")
-        return d
-
-    @classmethod
-    def post_load(cls, rec):
-        # expose id and value on reads
-        out = dict(rec)
-        out["id"] = out.get("policy_id")
-        if "value_json" in out and "value" not in out:
-            out["value"] = out["value_json"]
-        return out
