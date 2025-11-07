@@ -1,46 +1,37 @@
+import re
 from backend.evaluators import OPS
 from backend.models import Policies
-import re
-
 from backend.models.Users import ALLOWED_ROLES
 
 ALLOWED_OPERATORS = set(OPS.keys())
 REQUIRED_POLICY_KEYS = Policies.db_columns.keys()
-
-
-# ---- email regex (simple, practical) ----
 _EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
 
-# ========= Policy validators =========
-
 def validate_policy(policy):
+    """Validate a single policy object."""
     if not isinstance(policy, dict):
         raise ValueError("policy must be a JSON object")
-
     keys = set(policy.keys())
     missing = REQUIRED_POLICY_KEYS - keys
     if missing:
         raise ValueError(f"missing required keys: {sorted(missing)}")
-
     extra = keys - REQUIRED_POLICY_KEYS
     if extra:
         raise ValueError(f"unexpected keys: {sorted(extra)}")
-
     op = policy.get("operator")
     if op not in ALLOWED_OPERATORS:
         raise ValueError(f"invalid operator '{op}'. allowed: {sorted(ALLOWED_OPERATORS)}")
-
     v = policy.get("value")
     if op == "in" and not isinstance(v, (list, tuple, set)):
         raise ValueError("operator 'in' requires 'value' to be a list")
     if op == "includes" and not isinstance(v, str):
         raise ValueError("operator 'includes' requires 'value' to be a string")
-
     return dict(policy)
 
 
 def validate_policies(policies):
+    """Validate a list or single policy."""
     if policies is None:
         raise ValueError("missing JSON body")
     if isinstance(policies, dict):
@@ -49,8 +40,6 @@ def validate_policies(policies):
         raise ValueError("policies must be a list of objects")
     return [validate_policy(p) for p in policies]
 
-
-# ========= User field helpers (each field, single responsibility) =========
 
 def validate_username(v):
     if not isinstance(v, str) or not v.strip():
@@ -105,7 +94,7 @@ def validate_password(v):
         raise ValueError("password must contain an uppercase letter")
     if not any(c.isdigit() for c in pwd):
         raise ValueError("password must contain a digit")
-    return pwd  # plaintext stays here; hash elsewhere if needed
+    return pwd
 
 
 def _coerce_int(x, field):
@@ -137,7 +126,7 @@ def validate_mfa_enabled(v):
         return 1 if v else 0
     iv = _coerce_int(v, "mfa_enabled")
     if iv not in (0, 1):
-        raise ValueError("mfa_enabled must be 0 or 1 (or boolean)")
+        raise ValueError("mfa_enabled must be 0 or 1")
     return iv
 
 
@@ -177,38 +166,27 @@ def validate_income(v):
     return fv
 
 
-# ========= User object validators (compose field validators) =========
-
 def validate_user(u):
+    """Validate a single user object."""
     if not isinstance(u, dict):
         raise ValueError("user must be a JSON object")
-
     out = {}
-
-    # required
     out["username"] = validate_username(u.get("username"))
     out["password"] = validate_password(u.get("password"))
-
-    # optional
-    out["name"]          = validate_name(u.get("name"))
-    out["lastname"]      = validate_lastname(u.get("lastname"))
-    out["email"]         = validate_email(u.get("email"))
-    out["role"]          = validate_role(u.get("role"))
-    out["mfa_enabled"]   = validate_mfa_enabled(u.get("mfa_enabled"))
-    out["login_count"]   = validate_login_count(u.get("login_count"))
-    out["age_days"]      = validate_age_days(u.get("age_days"))
-    out["age"]           = validate_age(u.get("age"))
-    out["income"]        = validate_income(u.get("income"))
-
-    # keep any other unknown fields as-is if you want; or drop them:
-    # for k, v in u.items():  # uncomment if want to carry extras through
-    #     if k not in out:
-    #         out[k] = v
-
+    out["name"] = validate_name(u.get("name"))
+    out["lastname"] = validate_lastname(u.get("lastname"))
+    out["email"] = validate_email(u.get("email"))
+    out["role"] = validate_role(u.get("role"))
+    out["mfa_enabled"] = validate_mfa_enabled(u.get("mfa_enabled"))
+    out["login_count"] = validate_login_count(u.get("login_count"))
+    out["age_days"] = validate_age_days(u.get("age_days"))
+    out["age"] = validate_age(u.get("age"))
+    out["income"] = validate_income(u.get("income"))
     return out
 
 
 def validate_users(users):
+    """Validate a list or single user."""
     if users is None:
         raise ValueError("missing JSON body")
     if isinstance(users, dict):

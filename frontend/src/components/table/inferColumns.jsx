@@ -1,4 +1,3 @@
-// src/components/table/inferColumns.js
 const startCase = (s) => String(s ?? '')
   .replace(/[_-]+/g,' ')
   .replace(/\b\w/g, c => c.toUpperCase());
@@ -24,13 +23,11 @@ export function inferColumns(rows, opts = {}) {
     actions = null               // { width?:number, render:(params)=>JSX }
   } = opts;
 
-  // جمع کلیدهای همهٔ ردیف‌ها
   const keys = new Set();
   (rows || []).forEach(r => Object.keys(r || {}).forEach(k => {
     if (!exclude.includes(k)) keys.add(k);
   }));
 
-  // ترتیب نهایی: اول order، بعد بقیه
   const ordered = [...order, ...[...keys].filter(k => !order.includes(k))];
 
   const columns = ordered.map(k => {

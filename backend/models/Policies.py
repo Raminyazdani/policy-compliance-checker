@@ -1,4 +1,3 @@
-import json  # kept in case policy "value" needs JSON in future
 from .abs_model import Model
 
 

@@ -1,13 +1,11 @@
-// src/features/evaluate/EvaluatePanel.jsx
-import * as React from 'react'
-import { Button, Stack, Autocomplete, TextField, Checkbox } from '@mui/material'
-import Section from '../../components/layout/Section'
-import Heading from '../../components/layout/Heading'
-import ToolbarX from '../../components/layout/Toolbar'
-import DataTable from '../../components/table/DataTable'
-import { useEvaluate } from './evaluate.store'
+import * as React from 'react';
+import { Button, Stack, Autocomplete, TextField, Checkbox } from '@mui/material';
+import Section from '../../components/layout/Section';
+import Heading from '../../components/layout/Heading';
+import ToolbarX from '../../components/layout/Toolbar';
+import DataTable from '../../components/table/DataTable';
+import { useEvaluate } from './evaluate.store';
 
-// ساده: خروجی CSV از کل جدول
 function exportCSV(rows, filename = 'evaluate.csv') {
   if (!rows?.length) return;
   const cols = Array.from(
@@ -17,7 +15,7 @@ function exportCSV(rows, filename = 'evaluate.csv') {
     if (v === null || v === undefined) return '';
     const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
-  };
+    };
   const lines = [
     cols.join(','),
     ...rows.map(r => cols.map(c => esc(r[c])).join(',')),
@@ -31,44 +29,40 @@ function exportCSV(rows, filename = 'evaluate.csv') {
 }
 
 export default function EvaluatePanel() {
-  const { rows, refresh } = useEvaluate()
+  const { rows, refresh } = useEvaluate();
 
-  // فلت کردن خروجی /evaluate: هر ردیف = یک check برای یک user
   const flatRows = React.useMemo(() => {
-    if (!Array.isArray(rows)) return []
-    const out = []
+    if (!Array.isArray(rows)) return [];
+    const out = [];
     for (const r of rows) {
-      const username = r?.username ?? '<unknown>'
+      const username = r?.username ?? '<unknown>';
       for (const c of (r?.checks ?? [])) {
-        out.push({ username, ...c }) // policy_id, description, field, operator, expected, actual, passed, note
+        out.push({ username, ...c });
       }
     }
-    return out
-  }, [rows])
+    return out;
+  }, [rows]);
 
-  // لیست یکتا برای فیلتر
   const policyOptions = React.useMemo(
     () => Array.from(new Set(flatRows.map(x => x.policy_id ?? x.id))).filter(Boolean).sort(),
     [flatRows]
-  )
+  );
   const userOptions = React.useMemo(
     () => Array.from(new Set(flatRows.map(x => x.username))).filter(Boolean).sort(),
     [flatRows]
-  )
+  );
 
-  // وضعیت فیلترهای چندانتخابه
-  const [selPolicies, setSelPolicies] = React.useState([])
-  const [selUsers, setSelUsers] = React.useState([])
+  const [selPolicies, setSelPolicies] = React.useState([]);
+  const [selUsers, setSelUsers] = React.useState([]);
 
-  // اعمال فیلتر
   const filteredRows = React.useMemo(() => {
     return flatRows.filter(r => {
-      const polKey = r.policy_id ?? r.id
-      const okPol = selPolicies.length ? selPolicies.includes(polKey) : true
-      const okUsr = selUsers.length ? selUsers.includes(r.username) : true
-      return okPol && okUsr
-    })
-  }, [flatRows, selPolicies, selUsers])
+      const polKey = r.policy_id ?? r.id;
+      const okPol = selPolicies.length ? selPolicies.includes(polKey) : true;
+      const okUsr = selUsers.length ? selUsers.includes(r.username) : true;
+      return okPol && okUsr;
+    });
+  }, [flatRows, selPolicies, selUsers]);
 
   return (
     <Section>
@@ -85,7 +79,7 @@ export default function EvaluatePanel() {
             size="small"
             sx={{ minWidth: 280 }}
             renderOption={(props, option, { selected }) => {
-              // FIX: جدا کردن key از props تا هشدار React رفع شود
+              // prevent React key warning by not spreading the "key" prop
               const { key, ...optionProps } = props;
               return (
                 <li key={key} {...optionProps}>
@@ -106,7 +100,7 @@ export default function EvaluatePanel() {
             size="small"
             sx={{ minWidth: 240 }}
             renderOption={(props, option, { selected }) => {
-              // FIX: جدا کردن key از props تا هشدار React رفع شود
+              // prevent React key warning by not spreading the "key" prop
               const { key, ...optionProps } = props;
               return (
                 <li key={key} {...optionProps}>
@@ -129,12 +123,9 @@ export default function EvaluatePanel() {
       <DataTable
         rows={filteredRows}
         getRowId={(r, i) => `${r.username}-${(r.policy_id ?? r.id) ?? 'p'}-${r.field ?? ''}-${i}`}
-        columnOptions={{
-          // ستون‌ها داینامیک می‌مانند؛ فقط رندر passed را سفارشی می‌کنیم
-          render: { passed: (p) => (p.value ? '✓' : '✗') }
-        }}
+        columnOptions={{ render: { passed: (p) => (p.value ? '✓' : '✗') } }}
         height={600}
       />
     </Section>
-  )
+  );
 }

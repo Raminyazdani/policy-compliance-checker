@@ -1,0 +1,76 @@
+[
+  {
+    "policy_id": "p_mfa_required",
+    "description": "MFA must be enabled",
+    "field": "mfa_enabled",
+    "operator": "==",
+    "value": 1
+  },
+  {
+    "policy_id": "p_min_logins",
+    "description": "At least one successful login",
+    "field": "login_count",
+    "operator": ">=",
+    "value": 1
+  },
+  {
+    "policy_id": "p_account_age_week",
+    "description": "Account age at least 7 days",
+    "field": "age_days",
+    "operator": ">=",
+    "value": 7
+  },
+  {
+    "policy_id": "p_adult_only",
+    "description": "User must be adult",
+    "field": "age",
+    "operator": ">=",
+    "value": 18
+  },
+  {
+    "policy_id": "p_age_upper_bound",
+    "description": "User age must be <= 65",
+    "field": "age",
+    "operator": "<=",
+    "value": 65
+  },
+  {
+    "policy_id": "p_non_negative_income",
+    "description": "Income must be non-negative",
+    "field": "income",
+    "operator": ">=",
+    "value": 0
+  },
+  {
+    "policy_id": "p_allowed_roles",
+    "description": "Role must be one of admin/analyst/devops",
+    "field": "role",
+    "operator": "in",
+    "value": [
+      "admin",
+      "analyst",
+      "devops"
+    ]
+  },
+  {
+    "policy_id": "p_corp_email_pref",
+    "description": "Corporate domain preferred (acme.com)",
+    "field": "email",
+    "operator": "includes",
+    "value": "@acme.com"
+  },
+  {
+    "policy_id": "p_username_prefix",
+    "description": "Username should include role hint 'a' (toy rule)",
+    "field": "username",
+    "operator": "includes",
+    "value": "a"
+  },
+  {
+    "policy_id": "p_login_activity_cap",
+    "description": "Login count should not exceed 250",
+    "field": "login_count",
+    "operator": "<=",
+    "value": 250
+  }
+]

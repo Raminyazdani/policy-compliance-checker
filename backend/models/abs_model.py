@@ -1,54 +1,49 @@
+import sqlite3
 from abc import ABC
 from collections import OrderedDict
 
+
 class Model(ABC):
+    """Lightweight SQLite base model with simple CRUD utilities."""
+
     table_name = ""
     pk_name = ""
-    db_columns = OrderedDict()  # preserves insertion order
+    db_columns = OrderedDict()
 
-    # ---- meta ----
     @classmethod
     def columns(cls):
         return list(cls.db_columns.keys())
 
-    # ---- DDL ----
     @classmethod
     def create_table(cls, conn):
         cols = ", ".join(f"{name} {ctype}" for name, ctype in cls.db_columns.items())
         conn.execute(f"CREATE TABLE IF NOT EXISTS {cls.table_name} ({cols})")
         conn.commit()
 
-    # ---- core CRUD ----
     @classmethod
     def insert(cls, conn, **data):
         cols = [c for c in cls.columns() if c in data]
         if not cols:
             raise ValueError("no data to insert")
         vals = [data[c] for c in cols]
-
         placeholders = ", ".join("?" for _ in cols)
         sql = f"INSERT INTO {cls.table_name} ({', '.join(cols)}) VALUES ({placeholders})"
         cur = conn.cursor()
         cur.execute(sql, vals)
         conn.commit()
-
-        # return provided PK (e.g., TEXT PK) if present; else autoincrement id
         return data.get(cls.pk_name, cur.lastrowid)
 
     @classmethod
     def update(cls, conn, pk, **data):
         if pk is None:
             raise ValueError("pk is required")
-        data.pop(cls.pk_name, None)  # never update PK in SET
-
+        data.pop(cls.pk_name, None)
         set_cols = [c for c in cls.columns() if c in data]
         if not set_cols:
             return 0
-
         set_sql = ", ".join(f"{c} = ?" for c in set_cols)
         sql = f"UPDATE {cls.table_name} SET {set_sql} WHERE {cls.pk_name} = ?"
         params = [data[c] for c in set_cols] + [pk]
-
         cur = conn.cursor()
         cur.execute(sql, params)
         conn.commit()
@@ -78,14 +73,11 @@ class Model(ABC):
         cols = ", ".join(cls.columns())
         rows = conn.execute(f"SELECT {cols} FROM {cls.table_name}").fetchall()
         return [dict(zip(cls.columns(), r)) for r in rows]
- # ---- extras (حداقلی) ----
+
+    # ---- minimal extras ----
     @classmethod
     def upsert(cls, conn, **data):
-        """
-        Try insert; on PK conflict update.
-        - برای PKهای متنی (مثل policy_id) باید PK در data باشد.
-        - برای PKهای AutoIncrement (مثل user_id) این متد فقط در صورت وجود pk در data معنی‌دار است.
-        """
+        """Insert or update by primary key."""
         pk = data.get(cls.pk_name)
         try:
             return cls.insert(conn, **data)
@@ -97,7 +89,7 @@ class Model(ABC):
 
     @classmethod
     def delete_all(cls, conn):
-        """پاک‌کردن تمام رکوردهای جدول (بدون VACUUM)."""
+        """Delete all rows from the table."""
         cur = conn.cursor()
         cur.execute(f"DELETE FROM {cls.table_name}")
         conn.commit()

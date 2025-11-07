@@ -1,0 +1,17 @@
+[
+  {
+    "username": "tjohnson01",
+    "name": "Taylor",
+    "lastname": "Johnson",
+    "email": "taylor.johnson1@example.org",
+    "role": "analyst",
+    "password": "5f1BcIVLRXe",
+    "mfa_enabled": 0,
+    "login_count": 114,
+    "age_days": 2413,
+    "age": 35,
+    "income": 121414.57
+  }
+
+
+]

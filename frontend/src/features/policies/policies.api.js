@@ -10,7 +10,6 @@ export const policiesApi = {
   put:    (policy_id, payload) => http('PUT',    `/policies/${policy_id}`, payload),
   del:    (policy_id)          => http('DELETE', `/policies/${policy_id}`),
 
-  // افزودن فلگ clear (اختیاری)
   upload: async (file, clear = false) => {
     const fd = new FormData();
     fd.append('file', file);

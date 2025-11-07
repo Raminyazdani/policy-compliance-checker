@@ -5,30 +5,21 @@ OPS = {
     "<=": lambda a, b: a <= b,
     ">":  lambda a, b: a > b,
     "<":  lambda a, b: a < b,
-    "in": lambda a, b: a in b,     # expected: list/iterable
-    "includes": lambda a, b: b in a,  # expected: substring
+    "in": lambda a, b: a in b,
+    "includes": lambda a, b: b in a,
 }
 
 
 def evaluate_user(user_obj, policies):
-    """
-    Check one user against all policies.
-
-    Returns:
-    {
-      "username": "...",
-      "overall_compliant": bool,
-      "checks": [ { policy_id, description, field, operator, expected, actual, passed, note }, ... ]
-    }
-    """
+    """Evaluate one user against all policies."""
     checks = []
 
     for p in policies:
         policy_id = p["policy_id"]
-        desc      = p["description"]
-        field     = p["field"]
-        operator  = p["operator"]
-        expected  = p["value"]
+        desc = p["description"]
+        field = p["field"]
+        operator = p["operator"]
+        expected = p["value"]
 
         actual = user_obj.get(field)
         note = ""

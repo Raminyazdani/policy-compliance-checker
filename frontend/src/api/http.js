@@ -1,12 +1,7 @@
-// src/api/http.js
-const API_BASE = '/api';            // مسیر پایه برای بک‌اند (پروکسی یا Nginx)
+// HTTP helper supporting JSON and FormData.
+const API_BASE = '/api';
 export { API_BASE };
 
-/**
- * JSON & FormData-friendly HTTP helper
- * - اگر body از نوع FormData باشد، header ست نمی‌شود و بدنه همان FormData می‌رود.
- * - برای JSON، به‌صورت پیش‌فرض application/json ست می‌شود.
- */
 export async function http(method, path, body) {
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
 
@@ -14,7 +9,7 @@ export async function http(method, path, body) {
     method,
     headers: isForm ? undefined : { 'Content-Type': 'application/json' },
     body: isForm ? body : (body ? JSON.stringify(body) : undefined),
-    credentials: 'include', // اگر کوکی لازم ندارید، می‌توانید بردارید
+    credentials: 'include',
   });
 
   const text = await res.text();

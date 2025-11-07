@@ -1,5 +1,4 @@
-# backend/__main__.py
-from .app import app        # app در app.py ساخته شده (create_app صدا زده شده)
+from .app import app
 from .db import init_db
 
 def main():

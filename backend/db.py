@@ -1,9 +1,8 @@
-# backend/db.py
 import sqlite3
 from pathlib import Path
 from backend.models import Users, Policies
 
-DB_PATH = Path(__file__).parent /".."/"data"/"compliance.db"
+DB_PATH = Path(__file__).parent / ".." / "data" / "compliance.db"
 
 
 def get_conn():
@@ -11,13 +10,11 @@ def get_conn():
 
 
 def _ensure_tables(conn):
-    """Single source of truth for creating tables."""
     Users.create_table(conn)
     Policies.create_table(conn)
 
 
 def init_db():
-    """Call this once at startup if you won't use DBManager early."""
     conn = get_conn()
     try:
         _ensure_tables(conn)
@@ -26,7 +23,6 @@ def init_db():
 
 
 class DBManager:
-    """Tiny context manager that just provides a ready connection."""
     def __init__(self, db_path=DB_PATH):
         self.db_path = db_path
         self._conn = None

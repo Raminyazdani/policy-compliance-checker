@@ -1,0 +1,17 @@
+[
+
+  {
+    "policy_id": "p_username_prefix",
+    "description": "Username should include role hint 'a' (toy rule)",
+    "field": "username",
+    "operator": "includes",
+    "value": "a"
+  },
+  {
+    "policy_id": "p_login_activity_cap",
+    "description": "Login count should not exceed 250",
+    "field": "login_count",
+    "operator": "<=",
+    "value": 250
+  }
+]
