@@ -78,3 +78,27 @@ class Model(ABC):
         cols = ", ".join(cls.columns())
         rows = conn.execute(f"SELECT {cols} FROM {cls.table_name}").fetchall()
         return [dict(zip(cls.columns(), r)) for r in rows]
+ # ---- extras (حداقلی) ----
+    @classmethod
+    def upsert(cls, conn, **data):
+        """
+        Try insert; on PK conflict update.
+        - برای PKهای متنی (مثل policy_id) باید PK در data باشد.
+        - برای PKهای AutoIncrement (مثل user_id) این متد فقط در صورت وجود pk در data معنی‌دار است.
+        """
+        pk = data.get(cls.pk_name)
+        try:
+            return cls.insert(conn, **data)
+        except sqlite3.IntegrityError:
+            if pk is None:
+                raise
+            cls.update(conn, pk, **data)
+            return pk
+
+    @classmethod
+    def delete_all(cls, conn):
+        """پاک‌کردن تمام رکوردهای جدول (بدون VACUUM)."""
+        cur = conn.cursor()
+        cur.execute(f"DELETE FROM {cls.table_name}")
+        conn.commit()
+        return cur.rowcount
