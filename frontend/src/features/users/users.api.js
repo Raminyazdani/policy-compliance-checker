@@ -7,7 +7,6 @@ export const usersApi = {
   put:    (id, payload) => http('PUT', `/users/${id}`, payload),
   del:    (id) => http('DELETE', `/users/${id}`),
 
-  // افزودن فلگ clear (اختیاری)
   upload: async (file, clear = false) => {
     const fd = new FormData();
     fd.append('file', file);
